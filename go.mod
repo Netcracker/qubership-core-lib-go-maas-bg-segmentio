@@ -6,11 +6,11 @@ toolchain go1.23.1
 
 require (
 	github.com/docker/go-connections v0.5.0
-	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.0.0-20250418110345-8cb15b98251a
-	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.0.0-20250410105207-ba4bfd983c8d
-	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.0.0-20250410104652-3cf8d92a547f
-	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.0.0-20250410112738-a235fd6d6731
-	github.com/netcracker/qubership-core-lib-go/v3 v3.0.0-20250410090100-eded4c69a462
+	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.0.0
+	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.0.0
+	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.0.0
+	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.0.0
+	github.com/netcracker/qubership-core-lib-go/v3 v3.0.0
 	github.com/segmentio/kafka-go v0.4.47
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.35.0
