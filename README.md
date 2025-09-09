@@ -8,7 +8,7 @@
 # Blue-Green for segmentio Kafka client 
 
 This library provides adaptation for Blue Green Consumer from [blue-green-kafka](https://github.com/netcracker/qubership-core-lib-go-maas-bg-kafka)
-for [segmentio/kafka-go](github.com/segmentio/kafka-go) native go client.
+for [segmentio/kafka-go](https://github.com/segmentio/kafka-go) native go client.
 
 <!-- TOC -->
 * [Blue-Green for segmentio Kafka client](#blue-green-for-segmentio-kafka-client-)
