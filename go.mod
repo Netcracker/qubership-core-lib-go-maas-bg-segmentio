@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.25.1
 
 require (
-	github.com/docker/go-connections v0.5.0
+	github.com/docker/go-connections v0.6.0
 	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.0.1
 	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.0.1
 	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.0.1
