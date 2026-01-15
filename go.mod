@@ -1,6 +1,6 @@
 module github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio/v3
 
-go 1.25.5
+go 1.25.6
 
 require (
 	github.com/docker/go-connections v0.6.0
@@ -9,7 +9,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.1.6
 	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.1.6
 	github.com/netcracker/qubership-core-lib-go/v3 v3.3.0
-	github.com/segmentio/kafka-go v0.4.49
+	github.com/segmentio/kafka-go v0.4.50
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.40.0
 )
