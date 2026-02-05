@@ -1,6 +1,6 @@
 module github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio/v3
 
-go 1.25.6
+go 1.25.7
 
 require (
 	github.com/docker/go-connections v0.6.0
