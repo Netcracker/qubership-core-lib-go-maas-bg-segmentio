@@ -4,11 +4,11 @@ go 1.25.7
 
 require (
 	github.com/docker/go-connections v0.6.0
-	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.2.0
-	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.3.0
-	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.2.0
-	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.2.0
-	github.com/netcracker/qubership-core-lib-go/v3 v3.4.0
+	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.3.0
+	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.4.0
+	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.3.0
+	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.3.0
+	github.com/netcracker/qubership-core-lib-go/v3 v3.5.0
 	github.com/segmentio/kafka-go v0.4.50
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.40.0
@@ -74,8 +74,8 @@ require (
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.0 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.2.0 // indirect
-	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.2.0 // indirect
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.3.0 // indirect
+	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.3.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
