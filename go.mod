@@ -4,11 +4,11 @@ go 1.26.1
 
 require (
 	github.com/docker/go-connections v0.6.0
-	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.4.2
-	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.5.2
-	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.4.2
-	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.4.2
-	github.com/netcracker/qubership-core-lib-go/v3 v3.7.1
+	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.4.3
+	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.5.3
+	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.4.3
+	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.4.3
+	github.com/netcracker/qubership-core-lib-go/v3 v3.7.2
 	github.com/segmentio/kafka-go v0.4.50
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.41.0
@@ -39,13 +39,13 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/go-resty/resty/v2 v2.17.1 // indirect
+	github.com/go-resty/resty/v2 v2.17.2 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/hashicorp/consul/api v1.33.2 // indirect
+	github.com/hashicorp/consul/api v1.33.5 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
@@ -60,7 +60,7 @@ require (
 	github.com/knadh/koanf/parsers/yaml v1.0.0 // indirect
 	github.com/knadh/koanf/providers/env v1.1.0 // indirect
 	github.com/knadh/koanf/providers/file v1.2.1 // indirect
-	github.com/knadh/koanf/v2 v2.3.2 // indirect
+	github.com/knadh/koanf/v2 v2.3.4 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
@@ -76,8 +76,8 @@ require (
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.4.2 // indirect
-	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.4.2 // indirect
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.4.3 // indirect
+	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.4.3 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
@@ -86,7 +86,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.2 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/testcontainers/testcontainers-go/modules/kafka v0.40.0 // indirect
+	github.com/testcontainers/testcontainers-go/modules/kafka v0.41.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
 	github.com/viney-shih/go-lock v1.1.2 // indirect
@@ -100,9 +100,9 @@ require (
 	go.opentelemetry.io/otel/metric v1.41.0 // indirect
 	go.opentelemetry.io/otel/trace v1.41.0 // indirect
 	golang.org/x/crypto v0.48.0 // indirect
-	golang.org/x/exp v0.0.0-20250808145144-a408d31f581a // indirect
-	golang.org/x/mod v0.32.0 // indirect
-	golang.org/x/net v0.49.0 // indirect
+	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
+	golang.org/x/mod v0.33.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
