@@ -9,7 +9,7 @@ require (
 	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.4.5
 	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.4.5
 	github.com/netcracker/qubership-core-lib-go/v3 v3.8.0
-	github.com/segmentio/kafka-go v0.4.50
+	github.com/segmentio/kafka-go v0.4.51
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.41.0
 )
