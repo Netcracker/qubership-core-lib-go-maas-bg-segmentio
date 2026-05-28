@@ -130,3 +130,4 @@ in [metrics.go](https://github.com/Netcracker/qubership-core-lib-go-bg-kafka/blo
 
 ## Migration to Blue Green 2
 See details [here](docs/migration.md)
+
