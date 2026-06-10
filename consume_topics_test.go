@@ -16,7 +16,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/go-connections/nat"
 	bgKafka "github.com/netcracker/qubership-core-lib-go-bg-kafka/v3"
 	bg "github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2"
 	kafkaModel "github.com/netcracker/qubership-core-lib-go-maas-client/v3/kafka/model"
@@ -44,7 +43,7 @@ var (
 	noRecordsTimeout  = 5 * time.Second
 
 	topicAddress kafkaModel.TopicAddress
-	publicPort   = nat.Port("9093/tcp")
+	publicPort   = "9093"
 )
 
 func TestNewBgConsumer(t *testing.T) {
@@ -578,7 +577,7 @@ export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://%s:%d,BROKER://%s:9092
 						if err != nil {
 							return err
 						}
-						scriptContent := fmt.Sprintf(starterScriptContent, host, port.Int(), host)
+						scriptContent := fmt.Sprintf(starterScriptContent, host, int(port.Num()), host)
 						return c.CopyToContainer(ctx, []byte(scriptContent), starterScript, 0o755)
 					},
 					// 2. wait for the Kafka server to be ready
@@ -604,7 +603,7 @@ func (cluster *KafkaContainerKraftCluster) Brokers(ctx context.Context) ([]strin
 		if err != nil {
 			return nil, err
 		}
-		instanceBrokers := []string{fmt.Sprintf("%s:%d", host, port.Int())}
+		instanceBrokers := []string{fmt.Sprintf("%s:%d", host, int(port.Num()))}
 		brokers = append(brokers, instanceBrokers...)
 	}
 	return brokers, nil
