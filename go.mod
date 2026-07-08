@@ -3,11 +3,11 @@ module github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio/v3
 go 1.26.4
 
 require (
-	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.5.4
-	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.6.4
-	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.5.4
-	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.5.4
-	github.com/netcracker/qubership-core-lib-go/v3 v3.13.0
+	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.6.0
+	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.6.5
+	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.5.5
+	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.5.5
+	github.com/netcracker/qubership-core-lib-go/v3 v3.13.1
 	github.com/segmentio/kafka-go v0.4.51
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.43.0
@@ -75,8 +75,8 @@ require (
 	github.com/moby/sys/user v0.4.0 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.7.3 // indirect
-	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.5.4 // indirect
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.7.4 // indirect
+	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.5.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
@@ -85,7 +85,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.5 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
-	github.com/testcontainers/testcontainers-go/modules/kafka v0.42.0 // indirect
+	github.com/testcontainers/testcontainers-go/modules/kafka v0.43.0 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
 	github.com/viney-shih/go-lock v1.1.2 // indirect
