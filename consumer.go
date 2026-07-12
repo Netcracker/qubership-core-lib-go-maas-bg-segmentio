@@ -44,12 +44,8 @@ func (s *consumerAdapter) Offset() int64 {
 	return s.reader.Offset()
 }
 
-// ReadMessage wraps kafka-go's Reader.FetchMessage. The reader's in-memory read position
-// advances irrevocably on every call, and consumer-group mode has no seek-back API: a message
-// is never redelivered within the session once fetched. Callers that need to retry a failed
-// message must retry it in place rather than calling ReadMessage again - retrying via
-// ReadMessage silently skips the failed message as soon as any later offset on the same
-// partition is committed, since Kafka group offsets are per-partition high-water marks.
+// ReadMessage never redelivers within a session: FetchMessage's read position only moves
+// forward. Callers must retry a failed message in place, not by calling ReadMessage again.
 func (s *consumerAdapter) ReadMessage(ctx context.Context) (bgKafka.Message, error) {
 	nativeMsg, err := s.reader.FetchMessage(ctx)
 	return fromKafkaMessage(&nativeMsg), err

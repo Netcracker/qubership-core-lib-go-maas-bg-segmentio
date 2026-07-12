@@ -282,8 +282,7 @@ func (d *adminAdapter) OffsetsForTimes(ctx context.Context, m map[bgKafka.TopicP
 				result = &bgKafka.OffsetAndTimestamp{Offset: offs, Timestamp: t.UnixMilli()}
 			}
 		}
-		// A nil result (no record at or after the requested timestamp) is returned as-is,
-		// per NativeAdminAdapter's contract, instead of fabricating an offset.
+		// nil means no matching record, per NativeAdminAdapter's contract.
 		return result
 	})
 }
@@ -310,9 +309,7 @@ func (d *adminAdapter) offsetsForTimes(ctx context.Context, m map[bgKafka.TopicP
 				Topic:     t,
 			}
 			if po.Error != nil {
-				// Broker reported a per-partition error (e.g. leader not available during a
-				// rebalance). Surface it as a real failure instead of silently trusting the
-				// sentinel Offset: -1 kafka-go still attaches to the entry.
+				// don't trust the sentinel Offset: -1 kafka-go attaches on a per-partition error
 				logger.WarnC(ctx, "ListOffsets reported an error for partition %+v: %s", topicPartition, po.Error)
 				errs = append(errs, fmt.Errorf("partition %+v: %w", topicPartition, po.Error))
 				continue
