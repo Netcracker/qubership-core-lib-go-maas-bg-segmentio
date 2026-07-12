@@ -264,3 +264,37 @@ func TestEndOffsets_ReturnsErrorOnPartitionBrokerError(t *testing.T) {
 
 	assertions.ErrorIs(err, kafka.LeaderNotAvailable)
 }
+
+func TestCommittedOffsetsFromResponse_OmitsPartitionsWithoutCommittedOffset(t *testing.T) {
+	assertions := require.New(t)
+	topic := "test-topic"
+
+	result, err := committedOffsetsFromResponse(context.Background(), &kafka.OffsetFetchResponse{
+		Topics: map[string][]kafka.OffsetFetchPartition{
+			topic: {
+				{Partition: 0, CommittedOffset: 100},
+				{Partition: 1, CommittedOffset: -1}, // the broker's "no committed offset" sentinel
+			},
+		},
+	})
+	assertions.NoError(err)
+
+	assertions.Equal(map[bgKafka.TopicPartition]bgKafka.OffsetAndMetadata{
+		{Topic: topic, Partition: 0}: {Offset: 100},
+	}, result)
+}
+
+func TestCommittedOffsetsFromResponse_ReturnsErrorOnPartitionBrokerError(t *testing.T) {
+	assertions := require.New(t)
+	topic := "test-topic"
+
+	_, err := committedOffsetsFromResponse(context.Background(), &kafka.OffsetFetchResponse{
+		Topics: map[string][]kafka.OffsetFetchPartition{
+			topic: {
+				{Partition: 0, CommittedOffset: 100},
+				{Partition: 1, CommittedOffset: -1, Error: kafka.NotCoordinatorForGroup},
+			},
+		},
+	})
+	assertions.ErrorIs(err, kafka.NotCoordinatorForGroup)
+}

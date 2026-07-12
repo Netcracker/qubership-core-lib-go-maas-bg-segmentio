@@ -78,16 +78,34 @@ func (d *adminAdapter) ListConsumerGroupOffsets(ctx context.Context, groupId str
 	if err != nil {
 		return nil, err
 	}
+	return committedOffsetsFromResponse(ctx, offsetFetchResponse)
+}
+
+func committedOffsetsFromResponse(ctx context.Context, offsetFetchResponse *kafka.OffsetFetchResponse) (map[bgKafka.TopicPartition]bgKafka.OffsetAndMetadata, error) {
 	result := map[bgKafka.TopicPartition]bgKafka.OffsetAndMetadata{}
+	var errs []error
 	for t, ofps := range offsetFetchResponse.Topics {
 		for _, ofp := range ofps {
-			result[bgKafka.TopicPartition{
+			topicPartition := bgKafka.TopicPartition{
 				Partition: ofp.Partition,
 				Topic:     t,
-			}] = bgKafka.OffsetAndMetadata{Offset: ofp.CommittedOffset}
+			}
+			if ofp.Error != nil {
+				logger.WarnC(ctx, "OffsetFetch reported an error for partition %+v: %s", topicPartition, ofp.Error)
+				errs = append(errs, fmt.Errorf("partition %+v: %w", topicPartition, ofp.Error))
+				continue
+			}
+			if ofp.CommittedOffset < 0 {
+				// the broker reports -1 for partitions the group has no committed offset on
+				continue
+			}
+			result[topicPartition] = bgKafka.OffsetAndMetadata{Offset: ofp.CommittedOffset}
 		}
 	}
-	return result, err
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+	return result, nil
 }
 
 func (d *adminAdapter) AlterConsumerGroupOffsets(ctx context.Context, groupId bgKafka.GroupId, proposedOffsets map[bgKafka.TopicPartition]bgKafka.OffsetAndMetadata) error {
@@ -235,7 +253,7 @@ func (d *adminAdapter) BeginningOffsets(ctx context.Context, topicPartitions []b
 			return kafka.FirstOffsetOf(partition)
 		},
 		func(offsets kafka.PartitionOffsets) *bgKafka.OffsetAndTimestamp {
-			return &bgKafka.OffsetAndTimestamp{Offset: offsets.FirstOffset, Timestamp: time.Time{}.UnixMilli()}
+			return &bgKafka.OffsetAndTimestamp{Offset: offsets.FirstOffset}
 		})
 }
 
@@ -245,7 +263,7 @@ func (d *adminAdapter) EndOffsets(ctx context.Context, topicPartitions []bgKafka
 			return kafka.LastOffsetOf(partition)
 		},
 		func(offsets kafka.PartitionOffsets) *bgKafka.OffsetAndTimestamp {
-			return &bgKafka.OffsetAndTimestamp{Offset: offsets.LastOffset, Timestamp: time.Time{}.UnixMilli()}
+			return &bgKafka.OffsetAndTimestamp{Offset: offsets.LastOffset}
 		})
 }
 
