@@ -76,8 +76,7 @@ func (t *testDialer) Dial(network string, address string) (*kafka.Conn, error) {
 	return cAndE.conn, cAndE.err
 }
 
-// fakeClient implements the client interface, capturing the last ListOffsetsRequest and
-// returning a canned response, keyed by topic then partition.
+// fakeClient captures the last ListOffsetsRequest and returns a canned response.
 type fakeClient struct {
 	lastListOffsetsRequest *kafka.ListOffsetsRequest
 	listOffsetsResponse    map[string][]kafka.PartitionOffsets
@@ -127,8 +126,7 @@ func TestEndOffsets_QueriesAllPartitions(t *testing.T) {
 	result, err := adapter.EndOffsets(ctx, topicPartitions)
 	assertions.NoError(err)
 
-	// The request sent to the broker must contain an entry for every partition, not just
-	// the last one processed (regression test for the map-overwrite bug in offsetsForTimes).
+	// request must include every partition, not just the last one processed
 	assertions.Len(fc.lastListOffsetsRequest.Topics[topic], 3)
 
 	assertions.Equal(map[bgKafka.TopicPartition]int64{
@@ -202,11 +200,8 @@ func TestOffsetsForTimes_MapsPartitionWithNoRecordAtOrAfterTimestampToNil(t *tes
 	fc := &fakeClient{
 		listOffsetsResponse: map[string][]kafka.PartitionOffsets{
 			topic: {
-				// partition 0 has a record at/after the requested timestamp
 				{Partition: 0, Offsets: map[int64]time.Time{150: now}},
-				// partition 1's entire backlog is older than the requested timestamp:
-				// the broker reports no matching record, so Offsets is empty.
-				{Partition: 1, Offsets: map[int64]time.Time{}},
+				{Partition: 1, Offsets: map[int64]time.Time{}}, // no matching record
 			},
 		},
 	}
@@ -220,8 +215,6 @@ func TestOffsetsForTimes_MapsPartitionWithNoRecordAtOrAfterTimestampToNil(t *tes
 	assertions.NoError(err)
 
 	assertions.Equal(int64(150), result[bgKafka.TopicPartition{Topic: topic, Partition: 0}].Offset)
-	// Per NativeAdminAdapter's contract: an entry must be present, mapped to nil rather than
-	// omitted or a fabricated Offset: 0.
 	assertions.Contains(result, bgKafka.TopicPartition{Topic: topic, Partition: 1})
 	assertions.Nil(result[bgKafka.TopicPartition{Topic: topic, Partition: 1}])
 }
@@ -235,8 +228,6 @@ func TestOffsetsForTimes_ReturnsErrorOnPartitionBrokerError(t *testing.T) {
 		listOffsetsResponse: map[string][]kafka.PartitionOffsets{
 			topic: {
 				{Partition: 0, Offsets: map[int64]time.Time{150: now}},
-				// kafka-go reports a per-partition broker error (e.g. leader not available
-				// during a rebalance) alongside a sentinel Offset: -1.
 				{Partition: 1, LastOffset: -1, FirstOffset: -1, Error: kafka.LeaderNotAvailable},
 			},
 		},
@@ -248,9 +239,6 @@ func TestOffsetsForTimes_ReturnsErrorOnPartitionBrokerError(t *testing.T) {
 		{Topic: topic, Partition: 1}: now,
 	}
 	_, err := adapter.OffsetsForTimes(ctx, query)
-
-	// Must surface the real broker error rather than silently dropping the partition or
-	// trusting the -1 sentinel as a resolved offset.
 	assertions.ErrorIs(err, kafka.LeaderNotAvailable)
 }
 
@@ -262,7 +250,6 @@ func TestEndOffsets_ReturnsErrorOnPartitionBrokerError(t *testing.T) {
 		listOffsetsResponse: map[string][]kafka.PartitionOffsets{
 			topic: {
 				{Partition: 0, LastOffset: 100},
-				// broker error: LastOffset comes back as -1, must not be trusted as real.
 				{Partition: 1, LastOffset: -1, Error: kafka.LeaderNotAvailable},
 			},
 		},
