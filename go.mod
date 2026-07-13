@@ -108,3 +108,10 @@ require (
 	golang.org/x/text v0.37.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+// TEMPORARY — drop this replace (and bump the require above) before merging, once
+// netcracker/qubership-core-lib-go-bg-kafka releases the offset-corrector fixes.
+// The admin adapter fixes in this branch must not ship against an unfixed bg-kafka:
+// alone, the multi-partition query fix widens the corrector's restart rewind from
+// one random partition to every partition.
+replace github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 => github.com/serhiibuhaiov/qubership-core-lib-go-bg-kafka/v3 v3.6.1-0.20260713105854-c3648ad61082
