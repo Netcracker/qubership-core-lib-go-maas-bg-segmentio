@@ -44,13 +44,10 @@ func (s *consumerAdapter) Offset() int64 {
 	return s.reader.Offset()
 }
 
+// ReadMessage never redelivers within a session: FetchMessage's read position only moves
+// forward. Callers must retry a failed message in place, not by calling ReadMessage again.
 func (s *consumerAdapter) ReadMessage(ctx context.Context) (bgKafka.Message, error) {
 	nativeMsg, err := s.reader.FetchMessage(ctx)
-	//attempts := 10
-	//for err != nil && errors.Is(err, kafka.RebalanceInProgress) && attempts > 0 {
-	//	nativeMsg, err = s.reader.FetchMessage(ctx)
-	//	attempts--
-	//}
 	return fromKafkaMessage(&nativeMsg), err
 }
 

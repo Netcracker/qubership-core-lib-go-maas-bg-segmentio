@@ -78,16 +78,34 @@ func (d *adminAdapter) ListConsumerGroupOffsets(ctx context.Context, groupId str
 	if err != nil {
 		return nil, err
 	}
+	return committedOffsetsFromResponse(ctx, offsetFetchResponse)
+}
+
+func committedOffsetsFromResponse(ctx context.Context, offsetFetchResponse *kafka.OffsetFetchResponse) (map[bgKafka.TopicPartition]bgKafka.OffsetAndMetadata, error) {
 	result := map[bgKafka.TopicPartition]bgKafka.OffsetAndMetadata{}
+	var errs []error
 	for t, ofps := range offsetFetchResponse.Topics {
 		for _, ofp := range ofps {
-			result[bgKafka.TopicPartition{
+			topicPartition := bgKafka.TopicPartition{
 				Partition: ofp.Partition,
 				Topic:     t,
-			}] = bgKafka.OffsetAndMetadata{Offset: ofp.CommittedOffset}
+			}
+			if ofp.Error != nil {
+				logger.WarnC(ctx, "OffsetFetch reported an error for partition %+v: %s", topicPartition, ofp.Error)
+				errs = append(errs, fmt.Errorf("partition %+v: %w", topicPartition, ofp.Error))
+				continue
+			}
+			if ofp.CommittedOffset < 0 {
+				// the broker reports -1 for partitions the group has no committed offset on
+				continue
+			}
+			result[topicPartition] = bgKafka.OffsetAndMetadata{Offset: ofp.CommittedOffset}
 		}
 	}
-	return result, err
+	if len(errs) > 0 {
+		return nil, errors.Join(errs...)
+	}
+	return result, nil
 }
 
 func (d *adminAdapter) AlterConsumerGroupOffsets(ctx context.Context, groupId bgKafka.GroupId, proposedOffsets map[bgKafka.TopicPartition]bgKafka.OffsetAndMetadata) error {
@@ -234,8 +252,8 @@ func (d *adminAdapter) BeginningOffsets(ctx context.Context, topicPartitions []b
 		func(partition int) kafka.OffsetRequest {
 			return kafka.FirstOffsetOf(partition)
 		},
-		func(offsets kafka.PartitionOffsets) (int64, time.Time) {
-			return offsets.FirstOffset, time.Time{}
+		func(offsets kafka.PartitionOffsets) *bgKafka.OffsetAndTimestamp {
+			return &bgKafka.OffsetAndTimestamp{Offset: offsets.FirstOffset}
 		})
 }
 
@@ -244,14 +262,14 @@ func (d *adminAdapter) EndOffsets(ctx context.Context, topicPartitions []bgKafka
 		func(partition int) kafka.OffsetRequest {
 			return kafka.LastOffsetOf(partition)
 		},
-		func(offsets kafka.PartitionOffsets) (int64, time.Time) {
-			return offsets.LastOffset, time.Time{}
+		func(offsets kafka.PartitionOffsets) *bgKafka.OffsetAndTimestamp {
+			return &bgKafka.OffsetAndTimestamp{Offset: offsets.LastOffset}
 		})
 }
 
 func (d *adminAdapter) absoluteOffsets(ctx context.Context, topicPartitions []bgKafka.TopicPartition,
 	reqFunc func(partition int) kafka.OffsetRequest,
-	offsetFunc func(offsets kafka.PartitionOffsets) (int64, time.Time)) (map[bgKafka.TopicPartition]int64, error) {
+	offsetFunc func(offsets kafka.PartitionOffsets) *bgKafka.OffsetAndTimestamp) (map[bgKafka.TopicPartition]int64, error) {
 	offsetRequests := make(map[bgKafka.TopicPartition]kafka.OffsetRequest)
 	for _, tp := range topicPartitions {
 		offsetRequests[tp] = reqFunc(tp.Partition)
@@ -259,7 +277,9 @@ func (d *adminAdapter) absoluteOffsets(ctx context.Context, topicPartitions []bg
 	offsetForTimes, err := d.offsetsForTimes(ctx, offsetRequests, offsetFunc)
 	result := map[bgKafka.TopicPartition]int64{}
 	for tp, ot := range offsetForTimes {
-		result[tp] = ot.Offset
+		if ot != nil {
+			result[tp] = ot.Offset
+		}
 	}
 	return result, err
 }
@@ -270,29 +290,27 @@ func (d *adminAdapter) OffsetsForTimes(ctx context.Context, m map[bgKafka.TopicP
 	for tp, t := range m {
 		offsetRequests[tp] = kafka.TimeOffsetOf(tp.Partition, t)
 	}
-	return d.offsetsForTimes(ctx, offsetRequests, func(offsets kafka.PartitionOffsets) (int64, time.Time) {
-		offset := int64(0)
-		timestamp := time.Time{}
+	return d.offsetsForTimes(ctx, offsetRequests, func(offsets kafka.PartitionOffsets) *bgKafka.OffsetAndTimestamp {
+		var result *bgKafka.OffsetAndTimestamp
+		var earliest time.Time
 		// todo return the earliest by time offset?
 		for offs, t := range offsets.Offsets {
-			if timestamp.IsZero() {
-				timestamp = t
-				offset = offs
-			} else if t.Before(timestamp) {
-				timestamp = t
-				offset = offs
+			if result == nil || t.Before(earliest) {
+				earliest = t
+				result = &bgKafka.OffsetAndTimestamp{Offset: offs, Timestamp: t.UnixMilli()}
 			}
 		}
-		return offset, timestamp
+		// nil means no matching record, per NativeAdminAdapter's contract.
+		return result
 	})
 }
 
 func (d *adminAdapter) offsetsForTimes(ctx context.Context, m map[bgKafka.TopicPartition]kafka.OffsetRequest,
-	offsetFunc func(offsets kafka.PartitionOffsets) (int64, time.Time)) (
+	offsetFunc func(offsets kafka.PartitionOffsets) *bgKafka.OffsetAndTimestamp) (
 	result map[bgKafka.TopicPartition]*bgKafka.OffsetAndTimestamp, err error) {
 	topicsMap := map[string][]kafka.OffsetRequest{}
 	for tp, offsetRequest := range m {
-		topicsMap[tp.Topic] = []kafka.OffsetRequest{offsetRequest}
+		topicsMap[tp.Topic] = append(topicsMap[tp.Topic], offsetRequest)
 	}
 	offsetsResponse, err := d.client.ListOffsets(ctx, &kafka.ListOffsetsRequest{
 		Topics: topicsMap,
@@ -301,18 +319,24 @@ func (d *adminAdapter) offsetsForTimes(ctx context.Context, m map[bgKafka.TopicP
 		return
 	}
 	result = map[bgKafka.TopicPartition]*bgKafka.OffsetAndTimestamp{}
+	var errs []error
 	for t, pos := range offsetsResponse.Topics {
 		for _, po := range pos {
 			topicPartition := bgKafka.TopicPartition{
 				Partition: po.Partition,
 				Topic:     t,
 			}
-			offset, timestamp := offsetFunc(po)
-			result[topicPartition] = &bgKafka.OffsetAndTimestamp{
-				Offset:    offset,
-				Timestamp: timestamp.UnixMilli(),
+			if po.Error != nil {
+				// don't trust the sentinel Offset: -1 kafka-go attaches on a per-partition error
+				logger.WarnC(ctx, "ListOffsets reported an error for partition %+v: %s", topicPartition, po.Error)
+				errs = append(errs, fmt.Errorf("partition %+v: %w", topicPartition, po.Error))
+				continue
 			}
+			result[topicPartition] = offsetFunc(po)
 		}
+	}
+	if len(errs) > 0 {
+		err = errors.Join(errs...)
 	}
 	return
 }
