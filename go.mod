@@ -3,11 +3,11 @@ module github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio/v3
 go 1.26.5
 
 require (
-	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.6.0
-	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.6.5
-	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.5.5
-	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.5.5
-	github.com/netcracker/qubership-core-lib-go/v3 v3.13.1
+	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.6.1
+	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.6.6
+	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.5.6
+	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.5.6
+	github.com/netcracker/qubership-core-lib-go/v3 v3.13.2
 	github.com/segmentio/kafka-go v0.4.51
 	github.com/stretchr/testify v1.11.1
 	github.com/testcontainers/testcontainers-go v0.43.0
@@ -31,7 +31,7 @@ require (
 	github.com/docker/go-connections v0.7.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/ebitengine/purego v0.10.0 // indirect
-	github.com/fatih/color v1.18.0 // indirect
+	github.com/fatih/color v1.19.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
@@ -43,16 +43,16 @@ require (
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
-	github.com/hashicorp/consul/api v1.34.3 // indirect
+	github.com/hashicorp/consul/api v1.34.4 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
-	github.com/hashicorp/go-metrics v0.5.4 // indirect
+	github.com/hashicorp/go-metrics v0.6.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
-	github.com/hashicorp/serf v0.10.2 // indirect
+	github.com/hashicorp/serf v0.10.4 // indirect
 	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect
 	github.com/knadh/koanf/parsers/yaml v1.1.0 // indirect
@@ -61,8 +61,8 @@ require (
 	github.com/knadh/koanf/v2 v2.3.5 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
+	github.com/mattn/go-colorable v0.1.15 // indirect
+	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -75,8 +75,8 @@ require (
 	github.com/moby/sys/user v0.4.0 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.7.4 // indirect
-	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.5.5 // indirect
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.7.5 // indirect
+	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.5.6 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
