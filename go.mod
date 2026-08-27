@@ -3,11 +3,11 @@ module github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio/v3
 go 1.26.5
 
 require (
-	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.6.4
-	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.6.9
-	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.5.9
-	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.5.9
-	github.com/netcracker/qubership-core-lib-go/v3 v3.13.5
+	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.0
+	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.7.0
+	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.6.0
+	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.6.0
+	github.com/netcracker/qubership-core-lib-go/v3 v3.14.0
 	github.com/segmentio/kafka-go v0.4.51
 	github.com/stretchr/testify v1.12.1
 	github.com/testcontainers/testcontainers-go v0.44.0
@@ -27,7 +27,7 @@ require (
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
-	github.com/docker/go-connections v0.7.0 // indirect
+	github.com/docker/go-connections v0.8.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/ebitengine/purego v0.10.1 // indirect
 	github.com/fatih/color v1.19.0 // indirect
@@ -53,11 +53,11 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/hashicorp/serf v0.10.4 // indirect
 	github.com/klauspost/compress v1.18.7 // indirect
-	github.com/knadh/koanf/maps v0.1.2 // indirect
-	github.com/knadh/koanf/parsers/yaml v1.1.0 // indirect
-	github.com/knadh/koanf/providers/env/v2 v2.0.0 // indirect
+	github.com/knadh/koanf/maps v0.1.3 // indirect
+	github.com/knadh/koanf/parsers/yaml v1.1.1 // indirect
+	github.com/knadh/koanf/providers/env/v2 v2.0.1 // indirect
 	github.com/knadh/koanf/providers/file v1.2.1 // indirect
-	github.com/knadh/koanf/v2 v2.3.5 // indirect
+	github.com/knadh/koanf/v2 v2.3.6 // indirect
 	github.com/lufia/plan9stats v0.0.0-20260330125221-c963978e514e // indirect
 	github.com/magiconair/properties v1.8.10 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
@@ -74,8 +74,8 @@ require (
 	github.com/moby/sys/user v0.4.1 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.7.8 // indirect
-	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.5.9 // indirect
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.8.0 // indirect
+	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.6.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
@@ -83,7 +83,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.6 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
-	github.com/testcontainers/testcontainers-go/modules/kafka v0.43.0 // indirect
+	github.com/testcontainers/testcontainers-go/modules/kafka v0.44.0 // indirect
 	github.com/tklauser/go-sysconf v0.4.0 // indirect
 	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/viney-shih/go-lock v1.1.2 // indirect
@@ -104,4 +104,5 @@ require (
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
