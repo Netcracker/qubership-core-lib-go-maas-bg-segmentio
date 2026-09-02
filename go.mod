@@ -5,8 +5,8 @@ go 1.26.5
 require (
 	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.0
 	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.7.0
-	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.6.0
-	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.6.0
+	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.6.1
+	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.6.1
 	github.com/netcracker/qubership-core-lib-go/v3 v3.14.0
 	github.com/segmentio/kafka-go v0.4.51
 	github.com/stretchr/testify v1.12.1
