@@ -1,6 +1,6 @@
 module github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio/v3
 
-go 1.26.5
+go 1.27.1
 
 require (
 	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.0
