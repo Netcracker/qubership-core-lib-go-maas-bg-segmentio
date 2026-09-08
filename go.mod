@@ -3,7 +3,6 @@ module github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio/v3
 go 1.26.5
 
 require (
-	github.com/moby/moby/api v1.55.0
 	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.0
 	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.7.0
 	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.6.1
@@ -68,6 +67,7 @@ require (
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
 	github.com/moby/go-archive v0.3.0 // indirect
+	github.com/moby/moby/api v1.55.0 // indirect
 	github.com/moby/moby/client v0.5.0 // indirect
 	github.com/moby/patternmatcher v0.6.1 // indirect
 	github.com/moby/sys/sequential v0.7.0 // indirect

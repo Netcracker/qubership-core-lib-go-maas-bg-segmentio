@@ -6,15 +6,10 @@ import (
 	"fmt"
 	"io"
 	"math"
-	"net"
-	"net/netip"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/moby/moby/api/types/container"
-	mobynet "github.com/moby/moby/api/types/network"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -29,23 +24,11 @@ const (
 	readyLog = ".*Transitioning from RECOVERY to RUNNING.*"
 	// startupTimeout bounds bringing the whole cluster up.
 	startupTimeout = time.Minute
-	// shutdownTimeout is how long a broker is given to stop before it is killed.
-	shutdownTimeout = 10 * time.Second
 )
 
 // kafkaTestCluster is a Kafka cluster in KRaft mode, running in Docker.
-//
-// Each broker is published on a host port fixed at creation, so a broker that is
-// stopped and started again comes back at the address it had before, the way a
-// real broker does. That port is picked on the machine running the tests, so a
-// remote Docker daemon is not supported.
 type kafkaTestCluster struct {
 	instances []testcontainers.Container
-	host      string
-	hostPorts []int
-	// boots counts how many times each broker has started, so waiting for the
-	// ready line after a restart does not match the line from an earlier boot
-	boots []int
 }
 
 // useDockerHostFromEnv points Docker at TEST_DOCKER_URL when it is set.
@@ -60,6 +43,16 @@ func useDockerHostFromEnv() string {
 	return url
 }
 
+// loopbackV4 replaces "localhost" with the IPv4 address it may or may not
+// resolve to. The published port is bound to IPv4, so a client that resolves
+// localhost to ::1 is refused even though the broker is running.
+func loopbackV4(host string) string {
+	if host == "localhost" {
+		return "127.0.0.1"
+	}
+	return host
+}
+
 // newKafkaCluster starts brokersNum brokers of the given Confluent image version.
 func newKafkaCluster(ctx context.Context, version string, brokersNum, replicationFactor int) (*kafkaTestCluster, error) {
 	if brokersNum <= 0 {
@@ -69,14 +62,8 @@ func newKafkaCluster(ctx context.Context, version string, brokersNum, replicatio
 		return nil, fmt.Errorf("replicationFactor %d must be between 1 and brokersNum %d", replicationFactor, brokersNum)
 	}
 
-	hostPorts := make([]int, brokersNum)
 	voters := make([]string, brokersNum)
-	for i := range hostPorts {
-		port, err := freePort()
-		if err != nil {
-			return nil, fmt.Errorf("failed to reserve a host port for broker %d: %w", i, err)
-		}
-		hostPorts[i] = port
+	for i := range voters {
 		voters[i] = fmt.Sprintf("%d@broker-%d:9094", i, i)
 	}
 
@@ -84,66 +71,32 @@ func newKafkaCluster(ctx context.Context, version string, brokersNum, replicatio
 	if err != nil {
 		return nil, err
 	}
-	instances, err := startBrokers(ctx, version, strings.Join(voters, ","), replicationFactor, hostPorts, nw)
+
+	instances, err := startBrokers(ctx, version, strings.Join(voters, ","), replicationFactor, brokersNum, nw)
 	if err != nil {
 		return nil, err
 	}
 	if err := awaitQuorum(ctx, instances[0], brokersNum); err != nil {
 		return nil, err
 	}
-	host, err := instances[0].Host(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	boots := make([]int, brokersNum)
-	for i := range boots {
-		boots[i] = 1
-	}
-	return &kafkaTestCluster{instances: instances, host: host, hostPorts: hostPorts, boots: boots}, nil
+	return &kafkaTestCluster{instances: instances}, nil
 }
 
 // brokers returns the seed list of every broker.
-func (cluster *kafkaTestCluster) brokers() []string {
+func (cluster *kafkaTestCluster) brokers(ctx context.Context) ([]string, error) {
 	addresses := make([]string, len(cluster.instances))
-	for i := range addresses {
-		addresses[i] = cluster.brokerAddress(i)
+	for i, instance := range cluster.instances {
+		host, err := instance.Host(ctx)
+		if err != nil {
+			return nil, err
+		}
+		port, err := instance.MappedPort(ctx, brokerPort)
+		if err != nil {
+			return nil, err
+		}
+		addresses[i] = fmt.Sprintf("%s:%d", loopbackV4(host), port.Num())
 	}
-	return addresses
-}
-
-// brokerAddress returns the address of one broker. It does not change when the
-// broker is stopped and started again.
-func (cluster *kafkaTestCluster) brokerAddress(broker int) string {
-	return fmt.Sprintf("%s:%d", cluster.host, cluster.hostPorts[broker])
-}
-
-// stopBroker shuts one broker down, leaving its data behind. A partition it led
-// has to elect a new leader among the replicas, which is the point of the test.
-func (cluster *kafkaTestCluster) stopBroker(ctx context.Context, broker int) error {
-	timeout := shutdownTimeout
-	if err := cluster.instances[broker].Stop(ctx, &timeout); err != nil {
-		return fmt.Errorf("failed to stop broker %d: %w", broker, err)
-	}
-	return nil
-}
-
-// startBroker brings a stopped broker back at the same address and with the data
-// it had, and returns once it is serving again.
-func (cluster *kafkaTestCluster) startBroker(ctx context.Context, broker int) error {
-	instance := cluster.instances[broker]
-	if err := instance.Start(ctx); err != nil {
-		return fmt.Errorf("failed to start broker %d: %w", broker, err)
-	}
-	cluster.boots[broker]++
-	// the ready line from the previous boot is still in the log, so match the one
-	// this boot prints
-	if err := wait.ForLog(readyLog).AsRegexp().
-		WithOccurrence(cluster.boots[broker]).
-		WaitUntilReady(ctx, instance); err != nil {
-		return fmt.Errorf("broker %d did not come back: %w", broker, err)
-	}
-	return nil
+	return addresses, nil
 }
 
 // stop terminates every broker.
@@ -155,12 +108,12 @@ func (cluster *kafkaTestCluster) stop(ctx context.Context) {
 
 // startBrokers brings the brokers up in parallel: each waits for the quorum, so
 // starting them one by one would wait out the whole cluster per broker.
-func startBrokers(ctx context.Context, version, voters string, replicationFactor int,
-	hostPorts []int, nw *testcontainers.DockerNetwork) ([]testcontainers.Container, error) {
-	results := make(chan any, len(hostPorts))
-	for id := range hostPorts {
+func startBrokers(ctx context.Context, version, voters string, replicationFactor, brokersNum int,
+	nw *testcontainers.DockerNetwork) ([]testcontainers.Container, error) {
+	results := make(chan any, brokersNum)
+	for id := 0; id < brokersNum; id++ {
 		go func(id int) {
-			instance, err := startBrokerContainer(ctx, version, voters, id, replicationFactor, hostPorts[id], nw)
+			instance, err := startBrokerContainer(ctx, version, voters, id, replicationFactor, nw)
 			if err != nil {
 				results <- err
 				return
@@ -172,7 +125,7 @@ func startBrokers(ctx context.Context, version, voters string, replicationFactor
 	var started []testcontainers.Container
 	timer := time.NewTimer(startupTimeout)
 	defer timer.Stop()
-	for len(started) != len(hostPorts) {
+	for len(started) != brokersNum {
 		select {
 		case <-timer.C:
 			return nil, errors.New("timed out waiting for all brokers to start up")
@@ -207,11 +160,13 @@ func awaitQuorum(ctx context.Context, broker testcontainers.Container, brokersNu
 	}
 }
 
-func startBrokerContainer(ctx context.Context, version, voters string, brokerId, replicationFactor, hostPort int,
+func startBrokerContainer(ctx context.Context, version, voters string, brokerId, replicationFactor int,
 	nw *testcontainers.DockerNetwork) (testcontainers.Container, error) {
 	starterScript := "/usr/sbin/testcontainers_start.sh"
-	// the script is written once and survives a restart, which is why the
-	// advertised address has to be fixed rather than the mapped port of the moment
+	// PLAINTEXT is advertised to the tests, which reach the broker through the
+	// Docker host. BROKER is the inter-broker listener and has to be advertised
+	// as the network alias: inside a container the host address points back at
+	// itself, replication never leaves the broker, and no follower joins the ISR.
 	starterScriptContent := `#!/bin/bash
 export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://%s:%d,BROKER://%s:9092
 /etc/confluent/docker/run
@@ -219,7 +174,7 @@ export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://%s:%d,BROKER://%s:9092
 	name := fmt.Sprintf("broker-%d", brokerId)
 	request := testcontainers.ContainerRequest{
 		Image:          "confluentinc/cp-kafka:" + version,
-		ExposedPorts:   []string{brokerPort + "/tcp"},
+		ExposedPorts:   []string{brokerPort},
 		Networks:       []string{nw.Name},
 		NetworkAliases: map[string][]string{nw.Name: {name}},
 		Env: map[string]string{
@@ -240,15 +195,6 @@ export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://%s:%d,BROKER://%s:9092
 			"KAFKA_PROCESS_ROLES":                            "broker,controller",
 			"KAFKA_CONTROLLER_LISTENER_NAMES":                "CONTROLLER",
 		},
-		// bind the listener to the reserved port instead of letting Docker pick one,
-		// so the address survives a restart
-		HostConfigModifier: func(hostConfig *container.HostConfig) {
-			hostConfig.PortBindings = mobynet.PortMap{
-				mobynet.MustParsePort(brokerPort + "/tcp"): []mobynet.PortBinding{
-					{HostIP: netip.IPv4Unspecified(), HostPort: strconv.Itoa(hostPort)},
-				},
-			}
-		},
 		Entrypoint: []string{"sh"},
 		// wait for the starter script to be copied in, then run it
 		Cmd: []string{"-c", "while [ ! -f " + starterScript + " ]; do sleep 0.1; done; bash " + starterScript},
@@ -260,7 +206,11 @@ export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://%s:%d,BROKER://%s:9092
 						if err != nil {
 							return err
 						}
-						script := fmt.Sprintf(starterScriptContent, host, hostPort, host)
+						port, err := c.MappedPort(ctx, brokerPort)
+						if err != nil {
+							return err
+						}
+						script := fmt.Sprintf(starterScriptContent, loopbackV4(host), port.Num(), name)
 						return c.CopyToContainer(ctx, []byte(script), starterScript, 0o755)
 					},
 					func(ctx context.Context, c testcontainers.Container) error {
@@ -272,15 +222,4 @@ export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://%s:%d,BROKER://%s:9092
 	}
 	return testcontainers.GenericContainer(ctx,
 		testcontainers.GenericContainerRequest{ContainerRequest: request, Started: true})
-}
-
-// freePort reserves a port by taking it and letting it go, which is as close to
-// a reservation as the OS offers.
-func freePort() (int, error) {
-	listener, err := net.Listen("tcp", "127.0.0.1:0")
-	if err != nil {
-		return 0, err
-	}
-	defer listener.Close()
-	return listener.Addr().(*net.TCPAddr).Port, nil
 }
