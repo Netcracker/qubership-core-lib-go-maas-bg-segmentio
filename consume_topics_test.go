@@ -55,8 +55,7 @@ func TestNewBgConsumer(t *testing.T) {
 	defer kafkaCluster.stop(ctx)
 	t.Logf("kafka cluster started")
 
-	servers, err := kafkaCluster.brokers(ctx)
-	assertions.NoError(err)
+	servers := kafkaCluster.brokers()
 	fmt.Printf("servers=%v", servers)
 
 	topic := "topic-1"
