@@ -1,5 +1,3 @@
-//go:build failover
-
 package blue_green_segmentio
 
 import (
