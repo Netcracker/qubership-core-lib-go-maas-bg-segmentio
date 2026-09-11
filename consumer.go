@@ -46,12 +46,10 @@ func (s *consumerAdapter) Offset() int64 {
 
 func (s *consumerAdapter) ReadMessage(ctx context.Context) (bgKafka.Message, error) {
 	nativeMsg, err := s.reader.FetchMessage(ctx)
-	//attempts := 10
-	//for err != nil && errors.Is(err, kafka.RebalanceInProgress) && attempts > 0 {
-	//	nativeMsg, err = s.reader.FetchMessage(ctx)
-	//	attempts--
-	//}
-	return fromKafkaMessage(&nativeMsg), err
+	if err != nil {
+		return nil, err
+	}
+	return fromKafkaMessage(&nativeMsg), nil
 }
 
 func fromKafkaMessage(nativeMsg *kafka.Message) bgKafka.Message {

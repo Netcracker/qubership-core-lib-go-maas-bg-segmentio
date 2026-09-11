@@ -57,8 +57,10 @@ func main() {
 				// all messages from Kafka are processed and readTimeout occurred, try again
 				continue
 			} else {
+				// a broker being replaced fails polls until the group reaches the new
+				// coordinator, so keep polling instead of leaving the loop
 				logger.ErrorC(ctx, "Failed to read message from Kafka: %s", err.Error())
-				return
+				continue
 			}
 		}
 		if record.Message == nil {
@@ -97,6 +99,17 @@ func processMsg(ctx context.Context, consumer *bgKafka.BgConsumer, message bgKaf
 	return consumer.Commit(ctx, marker)
 }
 ~~~
+
+### Behaviour on broker loss
+
+A consumer depends on the broker coordinating its group as well as on the leaders
+of its partitions, and a rolling node update takes brokers away one at a time.
+Losing the coordinator makes `Poll` and `Commit` fail until the group joins the
+new one. Keep calling them: the consumer recovers on its own and does not need to
+be recreated.
+
+Delivery is at least once. A record whose commit did not land is delivered again,
+so make the processing safe to run twice, or deduplicate by key.
 
 ### Metrics
 
