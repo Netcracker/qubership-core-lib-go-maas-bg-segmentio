@@ -35,10 +35,30 @@ const (
 	pollStep = 5 * time.Second
 )
 
+// brokerFault is how a broker leaves. A node replacement drains it, so it hands
+// its partitions over before it goes; a node that dies does not. Both are real
+// events.
+type brokerFault struct {
+	name string
+	verb string
+	halt func(cluster *kafkaTestCluster, ctx context.Context, broker int) error
+}
+
+var brokerFaults = []brokerFault{
+	{name: "drained", verb: "draining", halt: (*kafkaTestCluster).stopBroker},
+	{name: "killed", verb: "killing", halt: (*kafkaTestCluster).killBroker},
+}
+
 // The group coordinator is lost while a consumer is reading. Everything produced
 // has to arrive, and committing has to work again, without recreating the
 // consumer.
 func TestFailover_BgConsumerSurvivesCoordinatorLoss(t *testing.T) {
+	for _, fault := range brokerFaults {
+		t.Run(fault.name, func(t *testing.T) { runCoordinatorLoss(t, fault) })
+	}
+}
+
+func runCoordinatorLoss(t *testing.T, fault brokerFault) {
 	ctx := context.Background()
 	assertions := require.New(t)
 
@@ -83,8 +103,9 @@ func TestFailover_BgConsumerSurvivesCoordinatorLoss(t *testing.T) {
 	// only known at this point
 	coordinator, err := cluster.partitionLeader(ctx, offsetsTopic, 0)
 	assertions.NoError(err)
-	t.Logf("stopping broker %d, which coordinates group %s", coordinator, failoverGroup)
-	assertions.NoError(cluster.stopBroker(ctx, coordinator))
+	t.Logf("%s broker %d, which coordinates group %s", fault.verb, coordinator, failoverGroup)
+	faultAt := time.Now()
+	assertions.NoError(fault.halt(cluster, ctx, coordinator))
 	assertions.NoError(cluster.awaitLeaders(ctx, failoverTopic, 1))
 
 	produceFailoverRecords(t, ctx, writer, recordsBeforeLoss, recordsBeforeLoss+recordsAfterLoss)
@@ -100,12 +121,10 @@ func TestFailover_BgConsumerSurvivesCoordinatorLoss(t *testing.T) {
 		seen[string(record.Message.Key())] = true
 		delivered++
 	}
-	t.Logf("the consumer delivered %d records, %d of them new, in %s",
-		delivered, len(seen)-recordsBeforeLoss, time.Since(start).Round(time.Millisecond))
+	t.Logf("coordinator %s: the consumer delivered %d records, %d of them new, in %s, %s after the fault",
+		fault.name, delivered, len(seen)-recordsBeforeLoss,
+		time.Since(start).Round(time.Millisecond), time.Since(faultAt).Round(time.Millisecond))
 	assertions.Len(seen, expected, "losing the coordinator must not lose a record")
-
-	assertions.NoError(cluster.startBroker(ctx, coordinator))
-	assertions.NoError(cluster.awaitLeaders(ctx, failoverTopic, 1))
 }
 
 // createFailoverTopic creates the topic through the library and waits until every

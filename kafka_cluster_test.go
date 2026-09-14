@@ -42,9 +42,6 @@ type kafkaTestCluster struct {
 	instances []testcontainers.Container
 	host      string
 	hostPorts []int
-	// boots counts the starts of each broker, so a wait for the ready line after
-	// a restart does not match the line from an earlier boot
-	boots []int
 	// running tells which brokers are up
 	running []bool
 }
@@ -94,14 +91,12 @@ func newKafkaCluster(ctx context.Context, version string, brokersNum, replicatio
 		return nil, err
 	}
 
-	boots := make([]int, brokersNum)
 	running := make([]bool, brokersNum)
-	for i := range boots {
-		boots[i] = 1
+	for i := range running {
 		running[i] = true
 	}
 	cluster := &kafkaTestCluster{
-		instances: instances, host: host, hostPorts: hostPorts, boots: boots, running: running,
+		instances: instances, host: host, hostPorts: hostPorts, running: running,
 	}
 	if err := cluster.awaitBrokersRegistered(ctx, brokersNum); err != nil {
 		return nil, err
@@ -139,7 +134,8 @@ func (cluster *kafkaTestCluster) brokerAddress(broker int) string {
 	return fmt.Sprintf("%s:%d", cluster.host, cluster.hostPorts[broker])
 }
 
-// stopBroker shuts one broker down, leaving its data behind.
+// stopBroker drains one broker, leaving its data behind: the JVM is PID 1, so it
+// takes the signal and hands its partitions over before exiting.
 func (cluster *kafkaTestCluster) stopBroker(ctx context.Context, broker int) error {
 	timeout := shutdownTimeout
 	if err := cluster.instances[broker].Stop(ctx, &timeout); err != nil {
@@ -149,20 +145,14 @@ func (cluster *kafkaTestCluster) stopBroker(ctx context.Context, broker int) err
 	return nil
 }
 
-// startBroker brings a stopped broker back and returns once it is serving again.
-func (cluster *kafkaTestCluster) startBroker(ctx context.Context, broker int) error {
-	instance := cluster.instances[broker]
-	if err := instance.Start(ctx); err != nil {
-		return fmt.Errorf("failed to start broker %d: %w", broker, err)
+// killBroker takes one broker away with no handover: SIGKILL to the JVM, which is
+// PID 1, so no shutdown hook runs. Stopping the container would not do it, because
+// a stop signal reaches the broker and it announces its departure before it dies.
+func (cluster *kafkaTestCluster) killBroker(ctx context.Context, broker int) error {
+	if _, _, err := cluster.instances[broker].Exec(ctx, []string{"kill", "-9", "1"}); err != nil {
+		return fmt.Errorf("failed to kill broker %d: %w", broker, err)
 	}
-	cluster.boots[broker]++
-	// the ready line from the previous boot is still in the log
-	if err := wait.ForLog(readyLog).AsRegexp().
-		WithOccurrence(cluster.boots[broker]).
-		WaitUntilReady(ctx, instance); err != nil {
-		return fmt.Errorf("broker %d did not come back: %w", broker, err)
-	}
-	cluster.running[broker] = true
+	cluster.running[broker] = false
 	return nil
 }
 

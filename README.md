@@ -106,7 +106,9 @@ A consumer depends on the broker coordinating its group as well as on the leader
 of its partitions, and a rolling node update takes brokers away one at a time.
 Losing the coordinator makes `Poll` and `Commit` fail until the group joins the
 new one. Keep calling them: the consumer recovers on its own and does not need to
-be recreated.
+be recreated. Expect seconds rather than milliseconds, and expect most of that to
+be the cluster settling on a new coordinator rather than the consumer reconnecting
+to it.
 
 Delivery is at least once. A record whose commit did not land is delivered again,
 so make the processing safe to run twice, or deduplicate by key.
