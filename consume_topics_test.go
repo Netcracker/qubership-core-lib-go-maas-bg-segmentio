@@ -4,12 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
-	"math"
 	"os"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -27,9 +24,6 @@ import (
 	"github.com/netcracker/qubership-core-lib-go/v3/context-propagation/ctxmanager"
 	"github.com/segmentio/kafka-go"
 	"github.com/stretchr/testify/require"
-	"github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/network"
-	"github.com/testcontainers/testcontainers-go/wait"
 )
 
 var (
@@ -43,7 +37,6 @@ var (
 	noRecordsTimeout  = 5 * time.Second
 
 	topicAddress kafkaModel.TopicAddress
-	publicPort   = "9093"
 )
 
 func TestNewBgConsumer(t *testing.T) {
@@ -56,14 +49,13 @@ func TestNewBgConsumer(t *testing.T) {
 
 	configloader.InitWithSourcesArray([]*configloader.PropertySource{configloader.EnvPropertySource()})
 	ctxmanager.Register(baseproviders.Get())
-	setTestDocker(t)
-	kafkaCluster, err := NewKafkaCluster(ctx, "7.4.0", brokers, replicationFactor)
+	useDockerHostFromEnv()
+	kafkaCluster, err := newKafkaCluster(ctx, "7.4.0", brokers, replicationFactor)
 	assertions.NoError(err)
-	defer kafkaCluster.Stop(ctx)
+	defer kafkaCluster.stop(ctx)
 	t.Logf("kafka cluster started")
 
-	servers, err := kafkaCluster.Brokers(ctx)
-	assertions.NoError(err)
+	servers := kafkaCluster.brokers()
 	fmt.Printf("servers=%v", servers)
 
 	topic := "topic-1"
@@ -435,183 +427,6 @@ func TestNewBgConsumer(t *testing.T) {
 			map[string][]string{originNs: recordsKafkaAsString(sentRecords)},
 			map[string]map[TopicPartition]int64{originNs: offsetsMap(topics, expectedLatestOffset)},
 			&ConsumerKey{Key: originNs, Consumers: originConsumers}))
-	}
-}
-
-type KafkaContainerKraftCluster struct {
-	Version           string
-	BrokersNum        int
-	ReplicationFactor int
-	BrokerInstances   []testcontainers.Container
-}
-
-func setTestDocker(t *testing.T) {
-	if testDockerUrl := os.Getenv("TEST_DOCKER_URL"); testDockerUrl != "" {
-		err := os.Setenv("DOCKER_HOST", testDockerUrl)
-		if err != nil {
-			t.Fatal(err.Error())
-		}
-		t.Logf("set DOCKER_HOST to value from 'TEST_DOCKER_URL' as '%s'.", testDockerUrl)
-	} else {
-		t.Logf("TEST_DOCKER_URL is empty")
-	}
-}
-
-func NewKafkaCluster(ctx context.Context, version string, brokersNum int, replicationFactor int) (*KafkaContainerKraftCluster, error) {
-	if brokersNum < 0 {
-		panic("brokersNum '" + strconv.Itoa(brokersNum) + "' must be greater than 0")
-	}
-	if replicationFactor < 0 || replicationFactor > brokersNum {
-		panic("replicationFactor '" + strconv.Itoa(replicationFactor) + "' must be less than brokersNum and greater than 0")
-	}
-
-	controllerQuorumVoters := ""
-	for i := 0; i < brokersNum; i++ {
-		if controllerQuorumVoters != "" {
-			controllerQuorumVoters += ","
-		}
-		voter := fmt.Sprintf("%d@broker-%d:9094", i, i)
-		controllerQuorumVoters += voter
-	}
-	clusterId := "4L6g3nShT-eMCtK--X86sw"
-	var brokers []testcontainers.Container
-	wg := &sync.WaitGroup{}
-	wg.Add(brokersNum)
-
-	resultChan := make(chan any, brokersNum)
-	nw, err := network.New(ctx)
-	if err != nil {
-		return nil, err
-	}
-	for i := 0; i < brokersNum; i++ {
-		id := i
-		go func(ctx context.Context, resultChan chan any) {
-			kafkaContainer, err := startKafkaContainer(ctx, version, clusterId, controllerQuorumVoters, id, replicationFactor, nw)
-			if err != nil {
-				resultChan <- err
-			} else {
-				resultChan <- kafkaContainer
-			}
-		}(ctx, resultChan)
-	}
-	timer := time.NewTimer(1 * time.Minute)
-	for len(brokers) != brokersNum {
-		select {
-		case <-timer.C:
-			return nil, errors.New("timed out waiting for all brokers to start up")
-		case brokerContainerOrErr := <-resultChan:
-			switch r := brokerContainerOrErr.(type) {
-			case testcontainers.Container:
-				brokers = append(brokers, r)
-			case error:
-				return nil, r
-			}
-		}
-	}
-	timer.Stop()
-	retry := true
-	for retry {
-		_, reader, err := brokers[0].Exec(ctx, []string{"sh", "-c", "kafka-metadata-shell --snapshot /var/lib/kafka/data/__cluster_metadata-0/00000000000000000000.log ls /brokers | wc -l"})
-		if err != nil {
-			return nil, err
-		}
-		if b, err := io.ReadAll(reader); err != nil {
-			return nil, err
-		} else {
-			stdout := strings.ReplaceAll(string(b), "\n", "")
-			retry = !strings.Contains(stdout, fmt.Sprintf("%d", brokersNum))
-		}
-	}
-	return &KafkaContainerKraftCluster{
-		Version:           version,
-		BrokersNum:        brokersNum,
-		ReplicationFactor: replicationFactor,
-		BrokerInstances:   brokers,
-	}, nil
-}
-
-func startKafkaContainer(ctx context.Context, version string, clusterId, voters string, brokerId int, replicationFactor int, nw *testcontainers.DockerNetwork) (testcontainers.Container, error) {
-	starterScript := "/usr/sbin/testcontainers_start.sh"
-	starterScriptContent := `#!/bin/bash
-export KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://%s:%d,BROKER://%s:9092
-/etc/confluent/docker/run
-`
-	name := fmt.Sprintf("broker-%d", brokerId)
-	req := testcontainers.ContainerRequest{
-		Image:        "confluentinc/cp-kafka:" + version,
-		ExposedPorts: []string{string(publicPort)},
-		//Name:           name,
-		Networks:       []string{nw.Name},
-		NetworkAliases: map[string][]string{nw.Name: {name}},
-		Env: map[string]string{
-			"CLUSTER_ID":                                     clusterId,
-			"KAFKA_LISTENERS":                                "PLAINTEXT://0.0.0.0:9093,BROKER://0.0.0.0:9092,CONTROLLER://0.0.0.0:9094",
-			"KAFKA_REST_BOOTSTRAP_SERVERS":                   "PLAINTEXT://0.0.0.0:9093,BROKER://0.0.0.0:9092,CONTROLLER://0.0.0.0:9094",
-			"KAFKA_LISTENER_SECURITY_PROTOCOL_MAP":           "BROKER:PLAINTEXT,PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT",
-			"KAFKA_CONTROLLER_QUORUM_VOTERS":                 voters,
-			"KAFKA_INTER_BROKER_LISTENER_NAME":               "BROKER",
-			"KAFKA_BROKER_ID":                                fmt.Sprintf("%d", brokerId),
-			"KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR":         fmt.Sprintf("%d", replicationFactor),
-			"KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS":             "1",
-			"KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR": fmt.Sprintf("%d", replicationFactor),
-			"KAFKA_TRANSACTION_STATE_LOG_MIN_ISR":            "1",
-			"KAFKA_LOG_FLUSH_INTERVAL_MESSAGES":              fmt.Sprintf("%d", math.MaxInt),
-			"KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS":         "0",
-			"KAFKA_NODE_ID":                                  fmt.Sprintf("%d", brokerId),
-			"KAFKA_PROCESS_ROLES":                            "broker,controller",
-			"KAFKA_CONTROLLER_LISTENER_NAMES":                "CONTROLLER",
-		},
-		Entrypoint: []string{"sh"},
-		// this CMD will wait for the starter script to be copied into the container and then execute it
-		Cmd: []string{"-c", "while [ ! -f " + starterScript + " ]; do sleep 0.1; done; bash " + starterScript},
-		LifecycleHooks: []testcontainers.ContainerLifecycleHooks{
-			{
-				PostStarts: []testcontainers.ContainerHook{
-					// 1. copy the starter script into the container
-					func(ctx context.Context, c testcontainers.Container) error {
-						host, err := c.Host(ctx)
-						if err != nil {
-							return err
-						}
-						port, err := c.MappedPort(ctx, publicPort)
-						if err != nil {
-							return err
-						}
-						scriptContent := fmt.Sprintf(starterScriptContent, host, int(port.Num()), host)
-						return c.CopyToContainer(ctx, []byte(scriptContent), starterScript, 0o755)
-					},
-					// 2. wait for the Kafka server to be ready
-					func(ctx context.Context, c testcontainers.Container) error {
-						return wait.ForLog(".*Transitioning from RECOVERY to RUNNING.*").AsRegexp().WaitUntilReady(ctx, c)
-					},
-				},
-			},
-		},
-	}
-	genericContainerReq := testcontainers.GenericContainerRequest{ContainerRequest: req, Started: true}
-	return testcontainers.GenericContainer(ctx, genericContainerReq)
-}
-
-func (cluster *KafkaContainerKraftCluster) Brokers(ctx context.Context) ([]string, error) {
-	var brokers []string
-	for _, broker := range cluster.BrokerInstances {
-		host, err := broker.Host(ctx)
-		if err != nil {
-			return nil, err
-		}
-		port, err := broker.MappedPort(ctx, publicPort)
-		if err != nil {
-			return nil, err
-		}
-		instanceBrokers := []string{fmt.Sprintf("%s:%d", host, int(port.Num()))}
-		brokers = append(brokers, instanceBrokers...)
-	}
-	return brokers, nil
-}
-
-func (cluster *KafkaContainerKraftCluster) Stop(ctx context.Context) {
-	for _, broker := range cluster.BrokerInstances {
-		broker.Terminate(ctx)
 	}
 }
 

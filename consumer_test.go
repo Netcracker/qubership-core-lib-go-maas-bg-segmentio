@@ -54,6 +54,26 @@ func TestBGConsumer(t *testing.T) {
 		})
 }
 
+// A failed read must not hand back a message wrapper. It would wrap a zero
+// message, and a caller reading it before the error gets an empty record with an
+// offset of 0.
+func TestConsumerAdapter_ReadMessageReturnsNoMessageOnError(t *testing.T) {
+	assertions := require.New(t)
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers: []string{"127.0.0.1:1"},
+		Topic:   "orders",
+		GroupID: "group",
+	})
+	defer reader.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	message, err := (&consumerAdapter{reader: reader}).ReadMessage(ctx)
+
+	assertions.Error(err)
+	assertions.Nil(message)
+}
+
 type writer struct {
 	writer *kafka.Writer
 }
