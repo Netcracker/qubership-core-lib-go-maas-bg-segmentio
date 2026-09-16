@@ -42,7 +42,12 @@ func init()  {
 
 // vars below provided by skipped code
 var topicAddress model.TopicAddress
-const readTimeout = time.Minute
+
+const (
+	readTimeout = time.Minute
+	// a pause between failed polls, so a permanent failure does not become a busy loop
+	retryDelay = time.Second
+)
 
 func main() {
 	ctx := context.Background()
@@ -56,12 +61,16 @@ func main() {
 			if errors.Is(err, context.DeadlineExceeded) {
 				// all messages from Kafka are processed and readTimeout occurred, try again
 				continue
-			} else {
-				// a broker being replaced fails polls until the group reaches the new
-				// coordinator, so keep polling instead of leaving the loop
-				logger.ErrorC(ctx, "Failed to read message from Kafka: %s", err.Error())
-				continue
 			}
+			if ctx.Err() != nil {
+				// shutdown: the next poll would fail the same way, without waiting
+				return
+			}
+			// a broker being replaced fails polls until the group reaches the new
+			// coordinator, so keep polling instead of leaving the loop
+			logger.ErrorC(ctx, "Failed to read message from Kafka: %s", err.Error())
+			time.Sleep(retryDelay)
+			continue
 		}
 		if record.Message == nil {
 			// message can be nil, if message at particular offset was filtered out by the filter
