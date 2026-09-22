@@ -3,12 +3,12 @@ module github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio/v3
 go 1.26.5
 
 require (
-	github.com/moby/moby/api v1.55.0
-	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.0
-	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.7.0
-	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.6.1
-	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.6.1
-	github.com/netcracker/qubership-core-lib-go/v3 v3.14.0
+	github.com/moby/moby/api v1.56.0
+	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.1
+	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.7.1
+	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.7.0
+	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.7.0
+	github.com/netcracker/qubership-core-lib-go/v3 v3.14.1
 	github.com/segmentio/kafka-go v0.4.51
 	github.com/stretchr/testify v1.12.1
 	github.com/testcontainers/testcontainers-go v0.44.0
@@ -20,6 +20,7 @@ require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/avast/retry-go/v4 v4.7.0 // indirect
+	github.com/bits-and-blooms/bitset v1.24.4 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
@@ -31,6 +32,7 @@ require (
 	github.com/docker/go-connections v0.8.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/ebitengine/purego v0.10.1 // indirect
+	github.com/failsafe-go/failsafe-go v0.9.7 // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
@@ -74,8 +76,8 @@ require (
 	github.com/moby/sys/user v0.4.1 // indirect
 	github.com/moby/sys/userns v0.1.0 // indirect
 	github.com/moby/term v0.5.2 // indirect
-	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.8.0 // indirect
-	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.6.0 // indirect
+	github.com/netcracker/qubership-core-lib-go-rest-utils/v2 v2.9.0 // indirect
+	github.com/netcracker/qubership-core-lib-go-stomp-websocket/v3 v3.6.1 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.18 // indirect
