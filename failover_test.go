@@ -79,6 +79,7 @@ func runCoordinatorLoss(t *testing.T, fault brokerFault) {
 
 	writer, err := maasKafkaGo.NewWriter(address)
 	assertions.NoError(err)
+	writer.RequiredAcks = kafka.RequireAll
 	t.Cleanup(func() { writer.Close() })
 
 	states := newStates("2024-01-01T10:00:00Z",
