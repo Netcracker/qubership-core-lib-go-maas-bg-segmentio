@@ -60,6 +60,7 @@ func useDockerHostFromEnv() string {
 
 // newKafkaCluster starts brokersNum brokers of the given Confluent image version.
 // The nodes carry both roles, so stopping one of three keeps the quorum.
+// replicationFactor is only checked here: callers pass it when creating topics.
 func newKafkaCluster(ctx context.Context, version string, brokersNum, replicationFactor int) (*kafkaTestCluster, error) {
 	if brokersNum <= 0 {
 		return nil, fmt.Errorf("brokersNum %d must be greater than 0", brokersNum)
@@ -86,7 +87,7 @@ func newKafkaCluster(ctx context.Context, version string, brokersNum, replicatio
 		return nil, err
 	}
 
-	instances, err := startBrokers(ctx, version, strings.Join(voters, ","), replicationFactor, host, hostPorts, nw)
+	instances, err := startBrokers(ctx, version, strings.Join(voters, ","), host, hostPorts, nw)
 	if err != nil {
 		return nil, err
 	}
@@ -165,7 +166,7 @@ func (cluster *kafkaTestCluster) stop(ctx context.Context) {
 
 // startBrokers brings the brokers up in parallel: each waits for the quorum, so
 // starting them one by one would wait out the whole cluster per broker.
-func startBrokers(ctx context.Context, version, voters string, replicationFactor int,
+func startBrokers(ctx context.Context, version, voters string,
 	host string, hostPorts []int, nw *testcontainers.DockerNetwork) ([]testcontainers.Container, error) {
 	type startResult struct {
 		id       int
@@ -175,7 +176,7 @@ func startBrokers(ctx context.Context, version, voters string, replicationFactor
 	results := make(chan startResult, len(hostPorts))
 	for id := range hostPorts {
 		go func(id int) {
-			instance, err := startBrokerContainer(ctx, version, voters, id, replicationFactor, host, hostPorts[id], nw)
+			instance, err := startBrokerContainer(ctx, version, voters, id, len(hostPorts), host, hostPorts[id], nw)
 			results <- startResult{id: id, instance: instance, err: err}
 		}(id)
 	}
@@ -220,7 +221,7 @@ func (cluster *kafkaTestCluster) awaitBrokersRegistered(ctx context.Context, bro
 	return fmt.Errorf("the cluster did not report %d brokers within %s", brokersNum, startupTimeout)
 }
 
-func startBrokerContainer(ctx context.Context, version, voters string, brokerId, replicationFactor int,
+func startBrokerContainer(ctx context.Context, version, voters string, brokerId, brokersNum int,
 	host string, hostPort int, nw *testcontainers.DockerNetwork) (testcontainers.Container, error) {
 	name := fmt.Sprintf("broker-%d", brokerId)
 	// PLAINTEXT is advertised to the tests, which reach the broker through the
@@ -246,9 +247,9 @@ exec /etc/confluent/docker/run
 			"KAFKA_CONTROLLER_QUORUM_VOTERS":                 voters,
 			"KAFKA_INTER_BROKER_LISTENER_NAME":               "BROKER",
 			"KAFKA_BROKER_ID":                                strconv.Itoa(brokerId),
-			"KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR":         strconv.Itoa(replicationFactor),
+			"KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR":         strconv.Itoa(brokersNum),
 			"KAFKA_OFFSETS_TOPIC_NUM_PARTITIONS":             "1",
-			"KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR": strconv.Itoa(replicationFactor),
+			"KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR": strconv.Itoa(brokersNum),
 			"KAFKA_TRANSACTION_STATE_LOG_MIN_ISR":            "1",
 			"KAFKA_LOG_FLUSH_INTERVAL_MESSAGES":              strconv.Itoa(math.MaxInt),
 			"KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS":         "0",

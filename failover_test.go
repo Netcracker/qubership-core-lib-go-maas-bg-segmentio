@@ -100,7 +100,10 @@ func runCoordinatorLoss(t *testing.T, fault brokerFault) {
 	assertions.Len(seen, recordsBeforeLoss, "the records produced before the loss must all arrive")
 
 	// the offsets topic is created by the first commit, so the coordinator is
-	// only known at this point
+	// only known at this point. Its replicas have to be in sync before the
+	// fault: a broker that drains hands over to an in-sync replica only, and
+	// with none the group is left without a coordinator.
+	assertions.NoError(cluster.awaitLeaders(ctx, offsetsTopic, 1))
 	coordinator, err := cluster.partitionLeader(ctx, offsetsTopic, 0)
 	assertions.NoError(err)
 	t.Logf("%s broker %d, which coordinates group %s", fault.verb, coordinator, failoverGroup)
