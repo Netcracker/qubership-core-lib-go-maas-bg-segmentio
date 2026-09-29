@@ -4,7 +4,7 @@ go 1.26.2
 
 require (
 	github.com/docker/go-connections v0.6.0
-	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.4.9
+	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.4.10
 	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.5.9
 	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.4.9
 	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.4.9

@@ -355,6 +355,8 @@ github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.4.8 h1:hvFeo/phoRr+MI
 github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.4.8/go.mod h1:piKPbfEq/tT/gIWUigmiQ4eT5JzC8afFMLRUPDUjLDc=
 github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.4.9 h1:Bfb7uaTNdOVmbqOyw16gLERZaz4V53WXoddf7RaMang=
 github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.4.9/go.mod h1:OFM/RvsWv53T7jtp3eKOaCYqqaWlRsHx1wu9HkWayBU=
+github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.4.10 h1:D+T1VSvxBnj8pMKva+u5lgZNILRHjB6/h9bzZ/z5td8=
+github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.4.10/go.mod h1:k7xHVbiZ/ks12RY9fjUgFccIC/EiuskkFv9GaLWZP3g=
 github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.5.5 h1:+uFxDQZQtu66GMks91iOZeDyQn7smcx1n+ZSqPu63/A=
 github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.5.5/go.mod h1:3XctObqVtPlalrzlaNvFrQf4P4BeiXFQXF82IOi90Ow=
 github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.5.6 h1:1yGLoUbzUhkkGUGiPnfLlW1olG/vENe4pcFl4IdVoKU=
