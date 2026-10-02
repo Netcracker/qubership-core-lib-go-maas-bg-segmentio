@@ -103,6 +103,16 @@ func (f *fakeClient) ListOffsets(ctx context.Context, req *kafka.ListOffsetsRequ
 	return &kafka.ListOffsetsResponse{Topics: f.listOffsetsResponse}, nil
 }
 
+// requestedPartitions lists the partitions the last request carried, so that a test can tell
+// three distinct partitions from the same one repeated.
+func requestedPartitions(f *fakeClient, topic string) []int {
+	var partitions []int
+	for _, r := range f.lastListOffsetsRequest.Topics[topic] {
+		partitions = append(partitions, r.Partition)
+	}
+	return partitions
+}
+
 func TestEndOffsets_QueriesAllPartitions(t *testing.T) {
 	assertions := require.New(t)
 	ctx := context.Background()
@@ -127,7 +137,7 @@ func TestEndOffsets_QueriesAllPartitions(t *testing.T) {
 	assertions.NoError(err)
 
 	// request must include every partition, not just the last one processed
-	assertions.Len(fc.lastListOffsetsRequest.Topics[topic], 3)
+	assertions.ElementsMatch([]int{0, 1, 2}, requestedPartitions(fc, topic))
 
 	assertions.Equal(map[bgKafka.TopicPartition]int64{
 		{Topic: topic, Partition: 0}: 100,
@@ -157,7 +167,7 @@ func TestBeginningOffsets_QueriesAllPartitions(t *testing.T) {
 	result, err := adapter.BeginningOffsets(ctx, topicPartitions)
 	assertions.NoError(err)
 
-	assertions.Len(fc.lastListOffsetsRequest.Topics[topic], 2)
+	assertions.ElementsMatch([]int{0, 1}, requestedPartitions(fc, topic))
 	assertions.Equal(map[bgKafka.TopicPartition]int64{
 		{Topic: topic, Partition: 0}: 10,
 		{Topic: topic, Partition: 1}: 20,
@@ -186,7 +196,7 @@ func TestOffsetsForTimes_QueriesAllPartitionsAndReturnsResultsForAll(t *testing.
 	result, err := adapter.OffsetsForTimes(ctx, query)
 	assertions.NoError(err)
 
-	assertions.Len(fc.lastListOffsetsRequest.Topics[topic], 2)
+	assertions.ElementsMatch([]int{0, 1}, requestedPartitions(fc, topic))
 	assertions.Len(result, 2)
 	assertions.Equal(int64(150), result[bgKafka.TopicPartition{Topic: topic, Partition: 0}].Offset)
 	assertions.Equal(int64(250), result[bgKafka.TopicPartition{Topic: topic, Partition: 1}].Offset)
@@ -200,8 +210,10 @@ func TestOffsetsForTimes_MapsPartitionWithNoRecordAtOrAfterTimestampToNil(t *tes
 	fc := &fakeClient{
 		listOffsetsResponse: map[string][]kafka.PartitionOffsets{
 			topic: {
-				{Partition: 0, Offsets: map[int64]time.Time{150: now}},
-				{Partition: 1, Offsets: map[int64]time.Time{}}, // no matching record
+				{Partition: 0, FirstOffset: -1, LastOffset: -1, Offsets: map[int64]time.Time{150: now}},
+				// no record at or after the timestamp: the broker answers -1, and kafka-go files
+				// it under the requested timestamp rather than in LastOffset
+				{Partition: 1, FirstOffset: -1, LastOffset: -1, Offsets: map[int64]time.Time{-1: now}},
 			},
 		},
 	}
@@ -269,7 +281,7 @@ func TestCommittedOffsetsFromResponse_OmitsPartitionsWithoutCommittedOffset(t *t
 	assertions := require.New(t)
 	topic := "test-topic"
 
-	result, err := committedOffsetsFromResponse(context.Background(), &kafka.OffsetFetchResponse{
+	result, err := committedOffsetsFromResponse("test-group", &kafka.OffsetFetchResponse{
 		Topics: map[string][]kafka.OffsetFetchPartition{
 			topic: {
 				{Partition: 0, CommittedOffset: 100},
@@ -284,11 +296,23 @@ func TestCommittedOffsetsFromResponse_OmitsPartitionsWithoutCommittedOffset(t *t
 	}, result)
 }
 
+// A group level error comes back with an empty topic list, which is indistinguishable from a
+// group that has committed nothing. Read as the latter, it drops the group out of the index.
+func TestCommittedOffsetsFromResponse_ReturnsErrorOnGroupError(t *testing.T) {
+	assertions := require.New(t)
+
+	_, err := committedOffsetsFromResponse("test-group", &kafka.OffsetFetchResponse{
+		Error:  kafka.NotCoordinatorForGroup,
+		Topics: map[string][]kafka.OffsetFetchPartition{},
+	})
+	assertions.ErrorIs(err, kafka.NotCoordinatorForGroup)
+}
+
 func TestCommittedOffsetsFromResponse_ReturnsErrorOnPartitionBrokerError(t *testing.T) {
 	assertions := require.New(t)
 	topic := "test-topic"
 
-	_, err := committedOffsetsFromResponse(context.Background(), &kafka.OffsetFetchResponse{
+	_, err := committedOffsetsFromResponse("test-group", &kafka.OffsetFetchResponse{
 		Topics: map[string][]kafka.OffsetFetchPartition{
 			topic: {
 				{Partition: 0, CommittedOffset: 100},

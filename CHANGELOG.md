@@ -21,6 +21,15 @@ All notable changes to this library are documented here.
 - A per-partition broker error from `ListOffsets` or `OffsetFetch` is returned
   instead of being read as an offset. `LeaderNotAvailable` used to surface as a
   resolved offset of -1.
+- A group level `OffsetFetch` error is returned. It arrives with an empty topic
+  list, which used to read as "this group has committed nothing" and dropped the
+  group out of the offset index.
+
+### Changed
+
+- A transient per-partition error now aborts offset alignment instead of being
+  absorbed into an offset. The consumer retries on the next `Poll`, so a leader
+  election during startup delays the first record rather than mislabelling it.
 
 ### Documentation
 

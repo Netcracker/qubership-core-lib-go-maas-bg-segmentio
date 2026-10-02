@@ -99,11 +99,8 @@ func TestBgConsumerCommittedOffsetsSurviveRestart(t *testing.T) {
 		consumers))
 
 	t.Logf("produce records timestamped before the Rewind(5m) window, then restart the consumer")
-	oldRecords := records(topics, initialPartitions, msgCounter)
-	for i := range oldRecords {
-		oldRecords[i].Time = time.Now().Add(-10 * time.Minute)
-	}
-	sent, err = sendRecords(t, "producing records older than the rewind window", "", oldRecords)
+	sent, err = sendRecords(t, "producing records older than the rewind window", "",
+		agedBeforeRewindWindow(records(topics, initialPartitions, msgCounter)))
 	assertions.NoError(err)
 	restartConsumer()
 
@@ -127,27 +124,56 @@ func TestBgConsumerCommittedOffsetsSurviveRestart(t *testing.T) {
 	waitForPartitions(assertions, topic, expandedPartitions)
 	topicAddress.NumPartitions = expandedPartitions
 
-	oldRecords = records(topics, initialPartitions, msgCounter) // the pre-expansion partitions 0 and 1
-	for i := range oldRecords {
-		oldRecords[i].Time = time.Now().Add(-10 * time.Minute)
-	}
-	sent, err = sendRecords(t, "producing to pre-expansion partitions (old timestamps) and new partitions", "",
-		append(oldRecords, recordsForPartitions(topic, []int{2, 3}, msgCounter)...))
+	_, err = sendRecords(t, "producing to the new partitions, before the group knows them", "",
+		agedBeforeRewindWindow(recordsForPartitions(topic, []int{2, 3}, msgCounter)))
+	assertions.NoError(err)
+
+	sent, err = sendRecords(t, "producing to pre-expansion partitions", "",
+		agedBeforeRewindWindow(records(topics, initialPartitions, msgCounter)))
 	assertions.NoError(err)
 	restartConsumer()
 
-	// the group has no committed offsets for the new partitions, so the corrector installs
-	// offsets for them only; the pre-expansion partitions keep their committed offsets and
-	// lose none of their old-timestamped records
 	assertions.True(parallelConsume(ctx, t, pollTimeout,
 		map[string][]string{originNs: recordsKafkaAsString(sent)},
 		map[string]map[TopicPartition]int64{originNs: {
 			{Topic: topic, Partition: 0}: 3,
 			{Topic: topic, Partition: 1}: 3,
-			{Topic: topic, Partition: 2}: 1,
-			{Topic: topic, Partition: 3}: 1,
 		}},
 		consumers))
+
+	committed := committedOffsets(ctx, assertions, kafkaClient, groupId, topic, expandedPartitions)
+	assertions.Equal(int64(1), committed[2], "partition 2 must start at its end offset")
+	assertions.Equal(int64(1), committed[3], "partition 3 must start at its end offset")
+}
+
+// committedOffsets reads the group's committed offset per partition straight from the broker.
+func committedOffsets(ctx context.Context, assertions *require.Assertions, client *kafka.Client,
+	groupId, topic string, partitions int) map[int]int64 {
+	indexes := make([]int, partitions)
+	for i := range indexes {
+		indexes[i] = i
+	}
+	response, err := client.OffsetFetch(ctx, &kafka.OffsetFetchRequest{
+		GroupID: groupId,
+		Topics:  map[string][]int{topic: indexes},
+	})
+	assertions.NoError(err)
+	assertions.NoError(response.Error)
+
+	result := map[int]int64{}
+	for _, p := range response.Topics[topic] {
+		assertions.NoError(p.Error)
+		result[p.Partition] = p.CommittedOffset
+	}
+	return result
+}
+
+// agedBeforeRewindWindow backdates records past the default Rewind(5m) install window.
+func agedBeforeRewindWindow(msgs []kafka.Message) []kafka.Message {
+	for i := range msgs {
+		msgs[i].Time = time.Now().Add(-10 * time.Minute)
+	}
+	return msgs
 }
 
 func waitForPartitions(assertions *require.Assertions, topic string, expected int) {
