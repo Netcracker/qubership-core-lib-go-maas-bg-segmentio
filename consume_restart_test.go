@@ -41,14 +41,13 @@ func TestBgConsumerCommittedOffsetsSurviveRestart(t *testing.T) {
 
 	configloader.InitWithSourcesArray([]*configloader.PropertySource{configloader.EnvPropertySource()})
 	ctxmanager.Register(baseproviders.Get())
-	setTestDocker(t)
-	kafkaCluster, err := NewKafkaCluster(ctx, "7.4.0", 1, 1)
+	useDockerHostFromEnv()
+	kafkaCluster, err := newKafkaCluster(ctx, "7.4.0", 1, 1)
 	assertions.NoError(err)
-	defer kafkaCluster.Stop(ctx)
+	defer kafkaCluster.stop(ctx)
 	t.Logf("kafka cluster started")
 
-	servers, err := kafkaCluster.Brokers(ctx)
-	assertions.NoError(err)
+	servers := kafkaCluster.brokers()
 
 	topic := "restart-topic"
 	topics := []string{topic}

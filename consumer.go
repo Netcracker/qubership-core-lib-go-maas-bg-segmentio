@@ -44,6 +44,8 @@ func (s *consumerAdapter) Offset() int64 {
 	return s.reader.Offset()
 }
 
+// ReadMessage does not redeliver: the reader's position only moves forward, so a message whose
+// handling failed has to be retried in place rather than by reading again.
 func (s *consumerAdapter) ReadMessage(ctx context.Context) (bgKafka.Message, error) {
 	nativeMsg, err := s.reader.FetchMessage(ctx)
 	if err != nil {
