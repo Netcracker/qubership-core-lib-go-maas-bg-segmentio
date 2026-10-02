@@ -3,7 +3,7 @@ module github.com/netcracker/qubership-core-lib-go-maas-bg-segmentio/v3
 go 1.26.5
 
 require (
-	github.com/moby/moby/api v1.56.0
+	github.com/moby/moby/api v1.56.1
 	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.2-0.20261002085338-c9b43690b5cb
 	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.7.1
 	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.7.0
