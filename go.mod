@@ -4,7 +4,7 @@ go 1.26.9
 
 require (
 	github.com/moby/moby/api v1.57.0
-	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.6
+	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.6-0.20261119100152-05052346e424
 	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.7.6
 	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.7.5
 	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.7.5
@@ -65,6 +65,7 @@ require (
 	github.com/magiconair/properties v1.18.12 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
+	github.com/mdelapenya/tlscert v0.2.0 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -85,7 +86,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/shirou/gopsutil/v4 v4.26.6 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
-	github.com/testcontainers/testcontainers-go/modules/kafka v0.44.0 // indirect
+	github.com/testcontainers/testcontainers-go/modules/kafka v0.45.0 // indirect
 	github.com/tklauser/go-sysconf v0.4.0 // indirect
 	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/viney-shih/go-lock v1.1.2 // indirect
@@ -108,4 +109,5 @@ require (
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.44.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	software.sslmate.com/src/go-pkcs12 v0.7.3 // indirect
 )
