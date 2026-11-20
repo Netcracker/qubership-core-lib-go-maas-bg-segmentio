@@ -212,8 +212,8 @@ github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd/go.mod h1:6dJ
 github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/modern-go/reflect2 v1.0.1/go.mod h1:bx2lNnkwVCuqBIxFjflWJWanXIb3RllmbCylyMrvgv0=
 github.com/mwitkow/go-conntrack v0.0.0-20161129095857-cc309e4a2223/go.mod h1:qRWi+5nqEBWmkhHvq77mSJWrCKwh8bxhgT7d/eI7P4U=
-github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.6-0.20261119100152-05052346e424 h1:Y2Bl3lMK0cS+Vqe83Y7rdLfqWU3bd2OhUb57PtBYfLc=
-github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.6-0.20261119100152-05052346e424/go.mod h1:v6mVIcZywqiayUlzFIMM0J5jZqHhtjzxrC6L743A1dI=
+github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.6 h1:rYtluTIrA/7DoooUqIlWe/t9P8gBJTXv/ShtL3zI9Sg=
+github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.6/go.mod h1:m/UiULkzJmQ1gpCCDI03zmjp/cOKmTeIXieeViq9aq8=
 github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.7.6 h1:bG7IZWN7RagNozE8DlO0E8/MxJqc6W/LFAF6bUSH/I0=
 github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.7.6/go.mod h1:CgRT6qAeE44a5OhECZnekq1M9KXieBgDbqPfcIKzX/s=
 github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.7.5 h1:c9gXRtMnLeuF3H7BT4d3++M8i4Z6zXvHNDvykQTm+7Y=

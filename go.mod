@@ -4,7 +4,7 @@ go 1.26.9
 
 require (
 	github.com/moby/moby/api v1.57.0
-	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.6-0.20261119100152-05052346e424
+	github.com/netcracker/qubership-core-lib-go-bg-kafka/v3 v3.7.6
 	github.com/netcracker/qubership-core-lib-go-bg-state-monitor/v2 v2.7.6
 	github.com/netcracker/qubership-core-lib-go-maas-client/v3 v3.7.5
 	github.com/netcracker/qubership-core-lib-go-maas-segmentio/v3 v3.7.5
